@@ -1,0 +1,151 @@
+name: CI/CD
+
+on: [push, pull_request]
+
+jobs:
+  flake8:
+    name: Run flake8
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v1
+      - name: Installing flake8
+        run: pip install flake8
+      - name: Run flake8
+        run: flake8 --ignore=E501,F401,F405,F403,W503,W504 sp2txtbot
+  mypy:
+    name: Run mypy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v1
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+          cache: "pip"
+      - name: Installing mypy
+        run: pip install mypy mypy-extensions
+      - name: Install all dependencies
+        run: pip install -r sp2txtbot/requirements.txt
+      - name: Run mypy with stubs installing
+        run: |
+          cd sp2txtbot
+          echo "Running mypy at $(pwd)"
+          mkdir .mypy_cache
+          mypy --install-types --non-interactive --config-file mypy.ini .
+  # unit-tests:
+  #   name: Run unit-tests
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout master
+  #       uses: actions/checkout@v1
+  #     - uses: actions/setup-python@v4
+  #       with:
+  #         python-version: "3.9"
+  #         cache: "pip"
+  #     - name: Install Dependencies
+  #       run: |
+  #         cd sp2txtbot
+  #         pip install -r requirements.txt
+  #     - name: Run Tests
+  #       run: |
+  #         cd sp2txtbot
+  #         python manage.py test -v 2
+  # build:
+  #   name: Build project
+  #   runs-on: ubuntu-latest
+  #   needs: [flake8, mypy, unit-tests]
+  #   if: github.ref == 'refs/heads/main'
+  #   steps:
+  #     - name: Checkout master
+  #       uses: actions/checkout@v1
+  #     - name: Add environment variables to .env.prod
+  #       run: |
+  #         echo DEBUG=0 >> .env.prod
+  #         echo SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }} >> .env.prod
+  #         echo BOT_TOKEN=${{ secrets.BOT_TOKEN }} >> .env.prod
+  #         echo WEBHOOK_SECRET_TOKEN=${{ secrets.WEBHOOK_SECRET_TOKEN }} >> .env.prod
+  #         echo DJANGO_ALLOWED_HOSTS=${{ secrets.DJANGO_ALLOWED_HOSTS }} >> .env.prod
+  #         echo DATABASE=${{ secrets.DATABASE }} >> .env.prod
+  #         echo SQL_ENGINE=django.db.backends.postgresql >> .env.prod
+  #         echo SQL_DATABASE=${{ secrets.SQL_DATABASE }} >> .env.prod
+  #         echo SQL_USER=${{ secrets.SQL_USER }} >> .env.prod
+  #         echo SQL_PASSWORD='${{ secrets.SQL_PASSWORD }}' >> .env.prod
+  #         echo SQL_HOST=${{ secrets.SQL_HOST }} >> .env.prod
+  #         echo SQL_PORT=${{ secrets.SQL_PORT }} >> .env.prod
+  #         echo VIRTUAL_HOST=${{ secrets.DOMAIN_NAME }} >> .env.prod
+  #         echo VIRTUAL_PORT=8000 >> .env.prod
+  #         echo NETWORK=proxy >> .env.prod
+  #         echo EMAIL_HOST_USER=${{ secrets.EMAIL_HOST_USER }} >> .env.prod
+  #         echo EMAIL_HOST_PASSWORD=${{ secrets.EMAIL_HOST_PASSWORD }} >> .env.prod
+  #         echo LETSENCRYPT_HOST=${{ secrets.DOMAIN_NAME }} >> .env.prod
+  #         echo POSTGRES_USER=${{ secrets.SQL_USER }} >> .env.prod.db
+  #         echo POSTGRES_PASSWORD=${{ secrets.SQL_PASSWORD }} >> .env.prod.db
+  #         echo POSTGRES_DB=${{ secrets.SQL_DATABASE }} >> .env.prod.db
+  #     - name: Set environment variables
+  #       run: |
+  #         echo WEB_IMAGE=ghcr.io/$(echo $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')/web >> $GITHUB_ENV
+  #     - name: Login to GitHub Container Registry
+  #       uses: docker/login-action@v2
+  #       with:
+  #         registry: ghcr.io
+  #         username: ${{ secrets.NAMESPACE }}
+  #         password: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+  #     - name: Build images
+  #       run: |
+  #         docker-compose -f docker-compose.prod.yml build
+  #     - name: Push images
+  #       run: |
+  #         docker push $WEB_IMAGE
+  # deploy:
+  #   name: Deploy project
+  #   runs-on: ubuntu-latest
+  #   needs: build
+
+  #   steps:
+  #     - name: Get images urls
+  #       run: |
+  #         echo WEB_IMAGE=ghcr.io/$(echo $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')/web >> $GITHUB_ENV
+  #     - name: Deploy to server via SSH action
+  #       uses: appleboy/ssh-action@v0.1.5
+  #       with:
+  #         host: ${{ secrets.SERVER_HOST }}
+  #         username: ${{ secrets.SERVER_USERNAME }}
+  #         password: ${{ secrets.SERVER_PASSWORD }}
+  #         port: ${{ secrets.SERVER_PORT }}
+  #         envs: WEB_IMAGE,NGINX_IMAGE
+  #         script: |
+  #           # Login to registry
+  #           docker login -u ${{ secrets.NAMESPACE }} -p ${{ secrets.PERSONAL_ACCESS_TOKEN }} ghcr.io
+  #           # Change to project directory
+  #           cd TheCBD.RU
+  #           # Add environment variables to .env.* files
+  #           [ -f .env.prod ] && rm .env.prod
+  #           [ -f .env.prod.db ] && rm .env.prod.db
+  #           [ -f .env.proxy-companion ] && rm .env.proxy-companion
+  #           echo DEBUG=0 >> .env.prod
+  #           echo SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }} >> .env.prod
+  #           echo BOT_TOKEN=${{ secrets.BOT_TOKEN }} >> .env.prod
+  #           echo WEBHOOK_SECRET_TOKEN=${{ secrets.WEBHOOK_SECRET_TOKEN }} >> .env.prod
+  #           echo DJANGO_ALLOWED_HOSTS=${{ secrets.DJANGO_ALLOWED_HOSTS }} >> .env.prod
+  #           echo DATABASE=${{ secrets.DATABASE }} >> .env.prod
+  #           echo SQL_ENGINE=django.db.backends.postgresql >> .env.prod
+  #           echo SQL_DATABASE=${{ secrets.SQL_DATABASE }} >> .env.prod
+  #           echo SQL_USER=${{ secrets.SQL_USER }} >> .env.prod
+  #           echo SQL_PASSWORD='${{ secrets.SQL_PASSWORD }}' >> .env.prod
+  #           echo SQL_HOST=${{ secrets.SQL_HOST }} >> .env.prod
+  #           echo SQL_PORT=${{ secrets.SQL_PORT }} >> .env.prod
+  #           echo VIRTUAL_HOST=${{ secrets.DOMAIN_NAME }} >> .env.prod
+  #           echo VIRTUAL_PORT=8000 >> .env.prod
+  #           echo NETWORK=proxy >> .env.prod
+  #           echo EMAIL_HOST_USER=${{ secrets.EMAIL_HOST_USER }} >> .env.prod
+  #           echo EMAIL_HOST_PASSWORD=${{ secrets.EMAIL_HOST_PASSWORD }} >> .env.prod
+  #           echo LETSENCRYPT_HOST=${{ secrets.DOMAIN_NAME }} >> .env.prod
+  #           echo POSTGRES_USER=${{ secrets.SQL_USER }} >> .env.prod.db
+  #           echo POSTGRES_PASSWORD=${{ secrets.SQL_PASSWORD }} >> .env.prod.db
+  #           echo POSTGRES_DB=${{ secrets.SQL_DATABASE }} >> .env.prod.db
+  #           # Stop and remove previous containers
+  #           docker-compose -f docker-compose.prod.yml down --rmi all
+  #           # Run a new container from a new image
+  #           docker pull $WEB_IMAGE
+  #           docker-compose -f docker-compose.prod.yml up -d

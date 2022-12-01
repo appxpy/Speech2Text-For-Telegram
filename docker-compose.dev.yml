@@ -1,0 +1,35 @@
+version: "3.8"
+
+services:
+  web:
+    build: ./sp2txtbot
+    container_name: web
+    command: "python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - ./sp2txtbot/:/usr/src/sp2txtbot/
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./.env.dev
+    depends_on:
+      - db
+  bot:
+    build: ./sp2txtbot
+    container_name: bot
+    command: "python manage.py bot"
+    volumes:
+      - ./sp2txtbot/:/usr/src/sp2txtbot/
+    env_file:
+      - ./.env.dev
+    depends_on:
+      - web
+  db:
+    image: postgres:13.0-alpine
+    container_name: db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    env_file:
+      - ./.env.dev.db
+
+volumes:
+  postgres_data:

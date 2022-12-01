@@ -1,0 +1,71 @@
+###########
+# BUILDER #
+###########
+
+# pull official base image
+FROM python:3.9.10-alpine as builder
+
+# set work directory
+WORKDIR /usr/src/sp2txtbot
+
+# set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+RUN apk update \
+    && apk add --update gcc python3-dev jpeg-dev zlib-dev musl-dev postgresql-dev build-base libstdc++ openssl && \
+    rm -rf /var/cache/apk/*
+
+# install dependencies
+COPY ./requirements.txt .
+RUN pip wheel --no-cache-dir --no-deps --wheel-dir /usr/src/sp2txtbot/wheels -r requirements.txt
+
+#########
+# FINAL #
+#########
+
+# pull official base image
+FROM python:3.9.10-alpine
+
+# create directory for the app user
+RUN mkdir -p /home/sp2txtbot
+
+# create the app user
+RUN addgroup -g 1000 -S sp2txtbot && adduser -S -u 1000 -G sp2txtbot sp2txtbot
+
+# create the appropriate directories
+ENV HOME=/home/sp2txtbot
+ENV APP_HOME=/home/sp2txtbot/web
+RUN mkdir $APP_HOME
+RUN mkdir $APP_HOME/static
+RUN mkdir $APP_HOME/media
+WORKDIR $APP_HOME
+
+# install dependencies
+RUN apk update \
+    && apk add --update gcc python3-dev jpeg-dev zlib-dev musl-dev postgresql-dev build-base libstdc++ openssl && \
+    rm -rf /var/cache/apk/*
+
+COPY --from=builder /usr/src/sp2txtbot/wheels /wheels
+COPY --from=builder /usr/src/sp2txtbot/requirements.txt .
+RUN pip install --no-cache /wheels/*
+
+# copy entrypoint.prod.sh
+COPY ./entrypoint.prod.sh .
+RUN sed -i 's/\r$//g'  $APP_HOME/entrypoint.prod.sh
+RUN chmod +x  $APP_HOME/entrypoint.prod.sh
+
+# copy project
+COPY . $APP_HOME
+
+RUN python manage.py collectstatic --noinput
+
+# chown all the files to the app user
+RUN chown -R sp2txtbot:sp2txtbot $APP_HOME
+
+# change to the app user
+USER sp2txtbot
+
+
+# run entrypoint.prod.sh
+ENTRYPOINT ["/home/sp2txtbot/web/entrypoint.prod.sh"]
