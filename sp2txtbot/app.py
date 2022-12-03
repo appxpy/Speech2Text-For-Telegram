@@ -1,25 +1,30 @@
 import settings
 import logging
-import datetime
+import sys
 
 from aiogram import Bot, types
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from aiogram.dispatcher import Dispatcher
 from aiogram.dispatcher.webhook import SendMessage
 from aiogram.utils import executor
+from handlers import Handlers
 
 
 API_TOKEN = settings.BOT_TOKEN
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('sp2txtbot')
 
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot)
 dp.middleware.setup(LoggingMiddleware())
 
 
-async def on_startup(dp):
+async def on_startup(dp: Dispatcher):
+    if not Handlers(bot, dp, logger).register_handlers():
+        logger.critical('Не удалось зарегистрировать обработчики')
+        sys.exit(1)
+
     if settings.DEBUG:
         logger.warning('Бот запущен в режиме отладки')
         return
@@ -32,7 +37,7 @@ async def on_startup(dp):
     # insert code here to run it after start
 
 
-async def on_shutdown(dp):
+async def on_shutdown(dp: Dispatcher):
     logger.warning('Завершение работы бота')
 
     # Удаляем вебхук

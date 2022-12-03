@@ -1,6 +1,7 @@
 import os
 import sys
 import logging
+import coloredlogs
 
 from hashlib import sha512
 
@@ -19,11 +20,19 @@ if not os.path.exists(LOG_FILE):
 
 # Задаем конфигурацию логгера
 
+_ = None
+
+if not DEBUG:
+    _ = LOG_FILE
+
+coloredlogs.install()
+
 logging.basicConfig(
-    filename=LOG_FILE,
+    filename=_,
     format='[%(asctime)s] - [%(levelname)s] - %(name)s - %(message)s',
     level=logging.DEBUG if DEBUG else logging.INFO
 )
+
 logger = logging.getLogger(__name__)
 
 # Настройки прокси
