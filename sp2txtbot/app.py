@@ -34,7 +34,6 @@ async def on_startup(dp: Dispatcher):
         return
 
     await bot.set_webhook(settings.BOT_WEBHOOK_URL, drop_pending_updates=True)
-    # insert code here to run it after start
 
 
 async def on_shutdown(dp: Dispatcher):

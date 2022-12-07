@@ -1,4 +1,3 @@
-# Необходима функция для преобразования аудиофайла в формате .ogg в .mp3
 from pydub import AudioSegment
 
 
