@@ -1,4 +1,6 @@
 import logging
+import os
+import tempfile
 from yc.stt import Speech2Text
 from aiogram import types
 
@@ -22,14 +24,21 @@ class Handlers:
 
     async def media(self, message: types.Message):
         if message.content_type == 'voice':
-            self.logger.info('Получен голосовой файл')
+            ext = '.ogg'
             file = await message.voice.get_file()
-            file = await file.download()
-            self.logger.info('Файл скачан')
-            # wait until file will be recognized
-            text = await self.stt.recognize(file.name)
-            self.logger.info('Файл распознан')
-            await message.answer(text)  # type: ignore
+        else:
+            ext = '.mp4'
+            file = await message.video_note.get_file()
+
+        self.logger.info('Получен файл')
+
+        # download file and make it temporary
+        with tempfile.NamedTemporaryFile(suffix=ext) as file_path:
+            self.logger.info(f'Сохраняем файл {file_path.name}')
+            await file.download(destination_file=file_path.name)
+            # send file to Yandex SpeechKit
+            text = await self.stt.recognize(file_path.name, ext)
+        await message.answer(text)
 
     def register_handlers(self):
         # Регистрируем обработчики

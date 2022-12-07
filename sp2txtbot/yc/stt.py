@@ -7,7 +7,7 @@ import time
 from speechkit import auth, Session, RecognitionLongAudio
 from typing import Iterable, List, Optional
 from yc.entities import JWT, Chunk
-from yc.utils import convert_ogg_to_mp3
+from yc.utils import convert_ogg_to_mp3, convert_mp4_to_mp3
 from pydantic import parse_obj_as
 
 
@@ -103,29 +103,49 @@ class Speech2Text:
         # И возвращаем текст
         return ' '.join([word.word for word in words])
 
-    async def recognize(self, ogg: str) -> str:
+    async def _recognize(self, recognizer: RecognitionLongAudio) -> str:
         """
         Распознает речь и переводит ее в текст, используя Yandex SpeechKit
 
-        :param str ogg: Аудио в формате OGG
+        :param RecognitionLongAudio recognizer: Распознаватель речи
+        :return: Текст
+        :rtype: str
+        """
+        self.logger.info('Распознавание речи запущено, ожидание результатов')
+
+        while not recognizer.get_recognition_results():
+            await asyncio.sleep(.5)
+
+        self.logger.info('Распознавание речи завершено, обработка результатов')
+
+        data = self._parse(recognizer.get_data())
+
+        if not data:
+            return 'Текст не распознан'
+
+        self.logger.info('Распознавание речи завершено, получение текста')
+
+        return self._get_text_from_chunks(data)
+
+    async def recognize(self, audio: str, ext: str = '.ogg') -> str:
+        """
+        Распознает речь и переводит ее в текст, используя Yandex SpeechKit
+
+        :param str ogg: Аудиофайл в формате ogg/mp4
+        :return: Текст
+        :rtype: str
         """
         self.logger.info('Запуск распознавания речи')
         recognizer: RecognitionLongAudio = self._get_recognizer()
         with tempfile.NamedTemporaryFile(suffix='.mp3') as file:
-            convert_ogg_to_mp3(ogg, file.name)
+            if ext == '.ogg':
+                convert_ogg_to_mp3(audio, file.name)
+            if ext == '.mp4':
+                convert_mp4_to_mp3(audio, file.name)
             recognizer.send_for_recognition(
                 file_path=file.name,
                 language_code='ru-RU',
                 model='general',
                 audioEncoding='MP3',
             )
-        self.logger.info('Распознавание речи запущено, ожидание результатов')
-        while not recognizer.get_recognition_results():
-            await asyncio.sleep(.5)
-        self.logger.info('Распознавание речи завершено, обработка результатов')
-        data = self._parse(recognizer.get_data())
-        if not data:
-            return 'Текст не распознан'
-
-        self.logger.info('Распознавание речи завершено, получение текста')
-        return self._get_text_from_chunks(data)
+        return await self._recognize(recognizer)
