@@ -2,6 +2,7 @@ import os
 import sys
 import logging
 import coloredlogs
+import base64
 
 from hashlib import sha512
 
@@ -72,3 +73,18 @@ SQL_USER = os.environ.get('SQL_USER')          # Имя пользователя
 SQL_PASSWORD = os.environ.get('SQL_PASSWORD')  # Пароль
 SQL_HOST = os.environ.get('SQL_HOST')          # Хост
 SQL_PORT = os.environ.get('SQL_PORT')          # Порт
+
+
+# Настройки Yandex SpeechKit
+
+YANDEX_CLOUD_BUCKET_NAME = os.environ.get('YANDEX_CLOUD_BUCKET_NAME', '')  # Имя бакета
+YANDEX_CLOUD_SERVICE_ACCOUNT_ID = os.environ.get('YANDEX_CLOUD_SERVICE_ACCOUNT_ID', '')  # Идентификатор сервисного аккаунта
+YANDEX_CLOUD_PRIVATE_KEY_ID = os.environ.get('YANDEX_CLOUD_PRIVATE_KEY_ID', '')  # Приватный ключ сервисного аккаунта
+YANDEX_CLOUD_PRIVATE_KEY_BASE64 = os.environ.get('YANDEX_CLOUD_PRIVATE_KEY_BASE64', '')  # Приватный ключ сервисного аккаунта (в base64)
+YANDEX_CLOUD_PRIVATE_KEY = base64.b64decode(YANDEX_CLOUD_PRIVATE_KEY_BASE64).decode()  # Приватный ключ сервисного аккаунта (в base64)
+
+
+# Настройки сервиса автоматической пунктуации
+
+PUNCTUATION_USER_ID = int(os.environ.get('PUNCTUATION_USER_ID', 0))  # Идентификатор пользователя
+PUNCTUATION_TOKEN = os.environ.get('PUNCTUATION_TOKEN', '')      # Токен пользователя
