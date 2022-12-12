@@ -4,7 +4,7 @@ import time
 import asyncio
 import re
 import logging
-
+from aiohttp.client import ClientResponse
 from pn.entities import PunctuationResponse
 
 from pydantic import parse_obj_as
@@ -53,16 +53,16 @@ class Punctuator:
             "api_key": self.api_key,
         }
 
-    async def _parse_response(self, dict: dict) -> PunctuationResponse:
+    async def _parse_response(self, data: ClientResponse) -> PunctuationResponse:
         """
         Парсит ответ сервера
 
-        :param dict dict: Ответ сервера
+        :param ClientResponse data: Ответ сервера
 
         :return: Объект ответа сервера
         :rtype: PunctuationResponse
         """
-        return parse_obj_as(PunctuationResponse, dict)
+        return parse_obj_as(PunctuationResponse, data)
 
     async def _send_request(self, url: str, data: dict) -> PunctuationResponse:
         """

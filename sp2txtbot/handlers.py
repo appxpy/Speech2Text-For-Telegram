@@ -77,7 +77,7 @@ class Handlers:
             'file_id': file_unique_id,
             'recognized_text': text,
         }
-        await Recognition.create(**cached)
+        await Recognition.create(None, **cached)
 
     async def media(self, message: types.Message):
         """

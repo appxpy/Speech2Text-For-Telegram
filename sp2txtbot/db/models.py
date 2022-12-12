@@ -1,4 +1,5 @@
 from tortoise import fields, models
+from typing import Any
 
 
 class User(models.Model):
@@ -14,7 +15,7 @@ class User(models.Model):
 
 class Recognition(models.Model):
     id = fields.IntField(pk=True)
-    user = fields.ForeignKeyField('models.User', related_name='recognitions', on_delete=fields.CASCADE)
+    user: Any = fields.ForeignKeyField('models.User', related_name='recognitions', on_delete=fields.CASCADE)
     file_id = fields.CharField(max_length=512, unique=True)
     recognized_text = fields.TextField(null=True)
     created_at = fields.DatetimeField(auto_now_add=True)
