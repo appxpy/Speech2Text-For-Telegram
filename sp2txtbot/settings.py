@@ -56,7 +56,7 @@ BOT_WEBHOOK_URL = f'https://{VIRTUAL_HOST}/{BOT_TOKEN_HASH}'                 # U
 
 # Настройки базы данных
 
-SQL_ALLOWED_ENGINES = ['sqlite', 'postgresql']
+SQL_ALLOWED_ENGINES = ['sqlite', 'postgres']
 SQLITE_DB_PATH = os.path.join(BASE_PATH, 'db.sqlite3')
 
 if not os.path.exists(SQLITE_DB_PATH):
@@ -74,7 +74,10 @@ SQL_PASSWORD = os.environ.get('SQL_PASSWORD')  # Пароль
 SQL_HOST = os.environ.get('SQL_HOST')          # Хост
 SQL_PORT = os.environ.get('SQL_PORT')          # Порт
 
-
+if SQL_ENGINE == 'sqlite':
+    SQL_URL = f'{SQL_ENGINE}:///{SQLITE_DB_PATH}'
+else:
+    SQL_URL = f'{SQL_ENGINE}://{SQL_USER}:{SQL_PASSWORD}@{SQL_HOST}:{SQL_PORT}/{SQL_DATABASE}'
 # Настройки Yandex SpeechKit
 
 YANDEX_CLOUD_BUCKET_NAME = os.environ.get('YANDEX_CLOUD_BUCKET_NAME', '')  # Имя бакета

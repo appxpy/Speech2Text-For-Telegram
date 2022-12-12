@@ -83,6 +83,7 @@ class Speech2Text:
         :return: Список объектов Chunk
         :rtype: List[Chunk]
         """
+        self.logger.info(f'Парсим ответ от Yandex SpeechKit - {data}')
         return parse_obj_as(List[Chunk], data)
 
     def _get_text_from_chunks(self, chunks: Iterable[Chunk]) -> str:
@@ -125,13 +126,18 @@ class Speech2Text:
 
         self.logger.info('Распознавание речи завершено, получение текста')
 
-        return self._get_text_from_chunks(data)
+        text = self._get_text_from_chunks(data)
+
+        self.logger.info('Распознавание речи завершено, текст получен - %s', text)
+
+        return text
 
     async def recognize(self, audio: str, ext: str = '.ogg') -> str:
         """
         Распознает речь и переводит ее в текст, используя Yandex SpeechKit
 
-        :param str ogg: Аудиофайл в формате ogg/mp4
+        :param str audio: Аудиофайл в формате ogg/mp4
+        :param str ext: Расширение файла (ogg - default / mp4 )
         :return: Текст
         :rtype: str
         """
@@ -144,8 +150,9 @@ class Speech2Text:
                 convert_mp4_to_mp3(audio, file.name)
             recognizer.send_for_recognition(
                 file_path=file.name,
-                language_code='ru-RU',
-                model='general',
+                literature_text=True,
+                language_code='auto',
+                model='general:rc',
                 audioEncoding='MP3',
             )
         return await self._recognize(recognizer)
