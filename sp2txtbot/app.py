@@ -8,7 +8,7 @@ from aiogram.dispatcher import Dispatcher
 from aiogram.dispatcher.webhook import SendMessage
 from aiogram.utils import executor
 from handlers import Handlers
-
+from tortoise import Tortoise
 
 API_TOKEN = settings.BOT_TOKEN
 
@@ -20,10 +20,19 @@ dp = Dispatcher(bot)
 dp.middleware.setup(LoggingMiddleware())
 
 
-async def on_startup(dp: Dispatcher):
+async def on_startup(dp: Dispatcher) -> None:
+    """
+    Запуск бота, функция вызывается aiogram автоматически при запуске
+
+    :param dp: Диспатчер
+    :return:
+    """
     if not Handlers(bot, dp, logger).register_handlers():
         logger.critical('Не удалось зарегистрировать обработчики')
         sys.exit(1)
+
+    await Tortoise.init(db_url=settings.SQL_URL, modules={'models': ['db.models']})
+    await Tortoise.generate_schemas()
 
     if settings.DEBUG:
         logger.warning('Бот запущен в режиме отладки')
@@ -36,13 +45,20 @@ async def on_startup(dp: Dispatcher):
     await bot.set_webhook(settings.BOT_WEBHOOK_URL, drop_pending_updates=True)
 
 
-async def on_shutdown(dp: Dispatcher):
+async def on_shutdown(dp: Dispatcher) -> None:
+    """
+    Завершение работы бота, функция вызывается aiogram автоматически при завершении работы
+
+    :param dp: Диспатчер
+    :return:
+    """
     logger.warning('Завершение работы бота')
 
     # Удаляем вебхук
     if not settings.DEBUG:
         await bot.delete_webhook()
 
+    await Tortoise.close_connections()
     logger.warning('Пока :)')
 
 if __name__ == '__main__':

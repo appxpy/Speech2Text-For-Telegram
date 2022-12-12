@@ -1,44 +1,131 @@
 import logging
 import os
 import tempfile
+from typing import Optional
 from yc.stt import Speech2Text
-from aiogram import types
-
-# Класс для обработки всех входящих сообщений
-# Все обработчики должны быть асинхронными
-# Все обработчики должны принимать два аргумента:
-# 1. Объект бота
-# 2. Объект сообщения
+from pn.punctuator import Punctuator
+from aiogram import types, Bot, Dispatcher
+from db.models import User, Recognition
+from schema import msg
 
 
 class Handlers:
-    def __init__(self, bot, dp, logger):
-        self.bot = bot
+    """
+    Класс для всех обработчиков бота, включая команды
+    """
+    def __init__(self, bot: Bot, dp: Dispatcher, logger: logging.Logger):
+        """
+        Конструктор класса
+
+        :param Bot bot: Объект бота
+        :param Dispatcher dp: Диспатчер
+        :param logging.Logger logger: Логгер
+
+        :return:
+        """
+        self.bot: Bot = bot
         self.dp = dp
         self.stt = Speech2Text(logger)
+        self.pn = Punctuator(logger)
         self.logger = logger
 
-    async def start(self, message):
-        self.logger.info('Получена команда /start')
-        await message.answer('Привет, я бот!')
+    async def start(self, message: types.Message):
+        """
+        Обработчик команды /start
+
+        :param types.Message message: Сообщение
+
+        :return:
+        """
+        await message.answer(msg('start'), parse_mode='Markdown', disable_web_page_preview=True)
+
+    async def create_or_update_user(self, message: types.Message):
+        defaults = {
+            'tag': message.from_user.username,
+            'username': message.from_user.full_name,
+        }
+        await User.update_or_create(id=message.from_user.id, defaults=defaults)
+
+    async def cache_lookup(self, file_unique_id: str) -> Optional[str]:
+        """
+        Поиск распознанного текста в кэше
+
+        :param str file_unique_id: Уникальный идентификатор файла
+
+        :return Optional[str]: Текст или None
+        """
+        try:
+            cached = await Recognition.get(file_id=file_unique_id)
+            self.logger.info('Найдено в кэше')
+            return cached.recognized_text
+        except Exception:
+            return None
+
+    async def cache_recognition(self, message: types.Message, text: str, file_unique_id: str):
+        """
+        Сохранение распознанного текста в кэш
+
+        :param types.Message message: Сообщение
+        :param str text: Текст
+        :param str file_unique_id: Уникальный идентификатор файла
+
+        :return:
+        """
+        user = await User.get(id=message.from_user.id)
+        cached = {
+            'user': user,
+            'file_id': file_unique_id,
+            'recognized_text': text,
+        }
+        await Recognition.create(**cached)
 
     async def media(self, message: types.Message):
+        """
+        Обработчик медиафайлов - видео и голосовые сообщения
+
+        :param types.Message message: Сообщение
+
+        :return:
+        """
+
+        # Создаем или обновляем пользователя
+        await self.create_or_update_user(message)
+
+        # Отправляем сообщение о начале обработки
+        _message = await self.bot.send_message(message.chat.id, msg('processing'), parse_mode='Markdown')
+
+        # Определяем тип файла
         if message.content_type == 'voice':
             ext = '.ogg'
             file = await message.voice.get_file()
+            file_unique_id = message.voice.file_unique_id
         else:
             ext = '.mp4'
             file = await message.video_note.get_file()
+            file_unique_id = message.video_note.file_unique_id
+
+        # Проверяем наличие в кэше
+        cache = await self.cache_lookup(file_unique_id)
+
+        # Если есть в кэше, то отправляем из кэша
+        if cache:
+            await _message.edit_text(msg('success', message=cache), parse_mode='Markdown')
+            return
 
         self.logger.info('Получен файл')
 
-        # download file and make it temporary
+        # Скачиваем файл
         with tempfile.NamedTemporaryFile(suffix=ext) as file_path:
             self.logger.info(f'Сохраняем файл {file_path.name}')
             await file.download(destination_file=file_path.name)
-            # send file to Yandex SpeechKit
+            # Отправляем в STT (Speech2Text)
             text = await self.stt.recognize(file_path.name, ext)
-        await message.answer(text)
+        # Отправляем в Punctuator
+        text = await self.pn.process(text)
+        # Сохраняем в кэш
+        await self.cache_recognition(message, text, file_unique_id)
+        # Отправляем пользователю
+        await _message.edit_text(msg('success', message=text), parse_mode='Markdown')
 
     def register_handlers(self):
         # Регистрируем обработчики

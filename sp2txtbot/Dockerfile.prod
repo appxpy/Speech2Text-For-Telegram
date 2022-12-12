@@ -3,7 +3,7 @@
 ###########
 
 # pull official base image
-FROM python:3.9.10-alpine as builder
+FROM python:3.10-slim as builder
 
 # set work directory
 WORKDIR /usr/src/sp2txtbot
@@ -12,9 +12,9 @@ WORKDIR /usr/src/sp2txtbot
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-RUN apk update \
-    && apk add --update gcc python3-dev jpeg-dev zlib-dev musl-dev postgresql-dev build-base libstdc++ openssl && \
-    rm -rf /var/cache/apk/*
+RUN apt-get update \
+    && apt-get install -y gcc python3-dev musl-dev postgresql build-essential netcat ffmpeg && \
+    apt clean --dry-run
 
 # install dependencies
 COPY ./requirements.txt .
@@ -25,7 +25,7 @@ RUN pip wheel --no-cache-dir --no-deps --wheel-dir /usr/src/sp2txtbot/wheels -r 
 #########
 
 # pull official base image
-FROM python:3.9.10-alpine
+FROM python:3.10-slim
 
 # create directory for the app user
 RUN mkdir -p /home/sp2txtbot
@@ -42,12 +42,13 @@ RUN mkdir $APP_HOME/media
 WORKDIR $APP_HOME
 
 # install dependencies
-RUN apk update \
-    && apk add --update gcc python3-dev jpeg-dev zlib-dev musl-dev postgresql-dev build-base libstdc++ openssl && \
-    rm -rf /var/cache/apk/*
+RUN apt-get update \
+    && apt-get install -y gcc python3-dev musl-dev postgresql build-essential netcat ffmpeg && \
+    apt clean --dry-run
 
 COPY --from=builder /usr/src/sp2txtbot/wheels /wheels
 COPY --from=builder /usr/src/sp2txtbot/requirements.txt .
+RUN pip install --upgrade pip setuptools
 RUN pip install --no-cache /wheels/*
 
 # copy entrypoint.prod.sh
@@ -58,14 +59,11 @@ RUN chmod +x  $APP_HOME/entrypoint.prod.sh
 # copy project
 COPY . $APP_HOME
 
-RUN python manage.py collectstatic --noinput
-
 # chown all the files to the app user
 RUN chown -R sp2txtbot:sp2txtbot $APP_HOME
 
 # change to the app user
 USER sp2txtbot
-
 
 # run entrypoint.prod.sh
 ENTRYPOINT ["/home/sp2txtbot/web/entrypoint.prod.sh"]
