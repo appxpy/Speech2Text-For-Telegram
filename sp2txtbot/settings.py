@@ -16,8 +16,7 @@ BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 # Задаем путь к файлу с логами, если он не существует, то создаем его
 
 LOG_FILE = os.path.join(BASE_PATH, 'sp2txtbot.log')
-if not os.path.exists(LOG_FILE):
-    open(LOG_FILE, 'w').close()
+open(LOG_FILE, 'w+').close()
 
 # Задаем конфигурацию логгера
 
@@ -45,11 +44,6 @@ VIRTUAL_PORT = os.environ.get('VIRTUAL_PORT', 8080)           # Виртуаль
 # Настройки бота
 
 BOT_TOKEN = os.environ.get('BOT_TOKEN', '')  # Токен бота
-
-if not BOT_TOKEN:
-    logger.critical('Ошибка конфигурации: не указан токен бота')
-    sys.exit(1)
-
 BOT_TOKEN_HASH = sha512(BOT_TOKEN.encode()).hexdigest()                      # Хэш токена бота
 BOT_SECURE_KEY = os.environ.get('BOT_SECURE_KEY')                            # Секретный ключ бота (для проверки вебхуков)
 BOT_WEBHOOK_URL = f'https://{VIRTUAL_HOST}/{BOT_TOKEN_HASH}'                 # URL вебхука
@@ -59,14 +53,9 @@ BOT_WEBHOOK_URL = f'https://{VIRTUAL_HOST}/{BOT_TOKEN_HASH}'                 # U
 SQL_ALLOWED_ENGINES = ['sqlite', 'postgres']
 SQLITE_DB_PATH = os.path.join(BASE_PATH, 'db.sqlite3')
 
-if not os.path.exists(SQLITE_DB_PATH):
-    open(SQLITE_DB_PATH, 'w').close()
+open(SQLITE_DB_PATH, 'w+').close()
 
 SQL_ENGINE = os.environ.get('SQL_ENGINE', 'sqlite')  # Движок базы данных
-
-if SQL_ENGINE not in SQL_ALLOWED_ENGINES:
-    logger.critical('Ошибка конфигурации: недопустимый движок базы данных, допустимые движки: %s', ', '.join(SQL_ALLOWED_ENGINES))
-    sys.exit(1)
 
 SQL_DATABASE = os.environ.get('SQL_DATABASE')  # Имя базы данных
 SQL_USER = os.environ.get('SQL_USER')          # Имя пользователя
@@ -76,7 +65,7 @@ SQL_PORT = os.environ.get('SQL_PORT')          # Порт
 
 if SQL_ENGINE == 'sqlite':
     SQL_URL = f'{SQL_ENGINE}:///{SQLITE_DB_PATH}'
-else:
+else:  # pragma: no cover
     SQL_URL = f'{SQL_ENGINE}://{SQL_USER}:{SQL_PASSWORD}@{SQL_HOST}:{SQL_PORT}/{SQL_DATABASE}'
 # Настройки Yandex SpeechKit
 

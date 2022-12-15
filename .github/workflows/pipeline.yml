@@ -33,24 +33,25 @@ jobs:
           echo "Running mypy at $(pwd)"
           mkdir .mypy_cache
           mypy --install-types --non-interactive --config-file mypy.ini .
-  # unit-tests:
-  #   name: Run unit-tests
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout master
-  #       uses: actions/checkout@v1
-  #     - uses: actions/setup-python@v4
-  #       with:
-  #         python-version: "3.9"
-  #         cache: "pip"
-  #     - name: Install Dependencies
-  #       run: |
-  #         cd sp2txtbot
-  #         pip install -r requirements.txt
-  #     - name: Run Tests
-  #       run: |
-  #         cd sp2txtbot
-  #         python manage.py test -v 2
+  unit-tests:
+    name: Run unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v1
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+          cache: "pip"
+      - name: Install Dependencies
+        run: |
+          cd sp2txtbot
+          pip install -r requirements.txt
+      - uses: FedericoCarboni/setup-ffmpeg@v2
+        id: setup-ffmpeg
+      - name: Run Tests
+        run: |
+          python -m pytest
   # build:
   #   name: Build project
   #   runs-on: ubuntu-latest

@@ -115,11 +115,13 @@ class Speech2Text:
         self.logger.info('Распознавание речи запущено, ожидание результатов')
 
         while not recognizer.get_recognition_results():
-            await asyncio.sleep(.5)
+            await asyncio.sleep(.5)  # pragma: no cover
 
         self.logger.info('Распознавание речи завершено, обработка результатов')
 
         data = self._parse(recognizer.get_data())
+
+        print(data)
 
         if not data:
             return 'Текст не распознан'

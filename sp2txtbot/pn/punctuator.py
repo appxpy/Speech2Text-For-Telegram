@@ -74,7 +74,7 @@ class Punctuator:
         :return: Ответ сервера
         :rtype: PunctuationResponse
         """
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession() as session:  # pragma: no cover
             async with session.post(url, json=data) as response:
                 response = await response.json()
                 return await self._parse_response(response)

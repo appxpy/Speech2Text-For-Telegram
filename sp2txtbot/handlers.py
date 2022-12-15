@@ -1,6 +1,7 @@
 import logging
 import os
 import tempfile
+import pickle
 from typing import Optional
 from yc.stt import Speech2Text
 from pn.punctuator import Punctuator
@@ -77,7 +78,27 @@ class Handlers:
             'file_id': file_unique_id,
             'recognized_text': text,
         }
-        await Recognition.create(None, **cached)
+        await Recognition.create(**cached)
+
+    async def prepare_recognition(self, message: types.Message,) -> tuple:
+        """
+        Подготовка к распознаванию
+
+        :param types.Message message: Сообщение
+
+        :return str: Текст
+        """
+        # Скачиваем файл
+        if message.content_type == 'voice':
+            ext = '.ogg'
+            file = await message.voice.get_file()
+            file_unique_id = message.voice.file_unique_id
+        else:
+            ext = '.mp4'
+            file = await message.video_note.get_file()
+            file_unique_id = message.video_note.file_unique_id
+
+        return file, file_unique_id, ext
 
     async def media(self, message: types.Message):
         """
@@ -95,14 +116,7 @@ class Handlers:
         _message = await self.bot.send_message(message.chat.id, msg('processing'), parse_mode='Markdown')
 
         # Определяем тип файла
-        if message.content_type == 'voice':
-            ext = '.ogg'
-            file = await message.voice.get_file()
-            file_unique_id = message.voice.file_unique_id
-        else:
-            ext = '.mp4'
-            file = await message.video_note.get_file()
-            file_unique_id = message.video_note.file_unique_id
+        file, file_unique_id, ext = await self.prepare_recognition(message)
 
         # Проверяем наличие в кэше
         cache = await self.cache_lookup(file_unique_id)
@@ -118,6 +132,7 @@ class Handlers:
         with tempfile.NamedTemporaryFile(suffix=ext) as file_path:
             self.logger.info(f'Сохраняем файл {file_path.name}')
             await file.download(destination_file=file_path.name)
+            await file.download(destination_file='test' + ext)
             # Отправляем в STT (Speech2Text)
             text = await self.stt.recognize(file_path.name, ext)
         # Отправляем в Punctuator
@@ -129,6 +144,9 @@ class Handlers:
 
     def register_handlers(self):
         # Регистрируем обработчики
-        self.dp.register_message_handler(self.start, commands=['start'])
-        self.dp.register_message_handler(self.media, content_types=['video_note', 'voice'])
+        try:
+            self.dp.register_message_handler(self.start, commands=['start'])
+            self.dp.register_message_handler(self.media, content_types=['video_note', 'voice'])
+        except Exception:
+            return
         return True
