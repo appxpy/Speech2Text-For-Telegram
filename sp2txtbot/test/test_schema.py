@@ -16,6 +16,7 @@ def test_invalid_key():
 def test_key_is_none():
     assert msg(None) == ''
 
+
 def test_escape_function():
     msg = '*test*_[`test'
     assert escape(msg) == '\\*test\\*\\_\\[\\`test'
