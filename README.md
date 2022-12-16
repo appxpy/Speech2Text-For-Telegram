@@ -53,4 +53,4 @@ Speech2Text Bot это **простой** бот для **быстрого** р�
 
 ---
 
-made with ❤️ by @appxpy and @brazenoptimist
+made with ❤️ by [@appxpy](https://github.com/appxpy) and [@brazenoptimist](https://github.com/brazenoptimist)
