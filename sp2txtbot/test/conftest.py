@@ -4,7 +4,6 @@ import shutil
 from handlers import Handlers
 from unittest.mock import AsyncMock, Mock
 from tortoise.contrib.test import finalizer, initializer, _TORTOISE_TEST_DB
-from aiogram.types import Message, File
 from speechkit import RecognitionLongAudio, auth, Session
 from pn.entities import PunctuationResponse
 from pn.punctuator import Punctuator

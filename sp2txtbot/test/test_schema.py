@@ -1,5 +1,6 @@
 from schema import msg, escape
 
+
 def test_msg_exists():
     message = 'test'
     assert msg('success', message=message) == f'✅ *Готово!*\n\n{message}'
