@@ -32,7 +32,7 @@ FROM python:3.10-slim
 RUN mkdir -p /home/sp2txtbot
 
 # create the app user
-RUN addgroup -g 1000 -S sp2txtbot && adduser -S -u 1000 -G sp2txtbot sp2txtbot
+RUN addgroup --gid 1000 sp2txtbot && adduser --uid 1000 --ingroup sp2txtbot sp2txtbot
 
 # create the appropriate directories
 ENV HOME=/home/sp2txtbot
