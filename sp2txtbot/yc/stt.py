@@ -86,7 +86,7 @@ class Speech2Text:
         self.logger.info(f'Парсим ответ от Yandex SpeechKit - {data}')
         return parse_obj_as(List[Chunk], data)
 
-    def _get_text_from_chunks(self, chunks: Iterable[Chunk]) -> str:
+    def _get_text_from_chunks(self, chunks: List[Chunk]) -> str:
         """
         Получает текст из чанков
 
@@ -97,12 +97,11 @@ class Speech2Text:
         # Фильтруем чанки по каналу
         chunks = self._filter_chunks_by_channel(chunks)
 
-        # Получаем все слова из всех объектов Alternative
-        words = [word for chunk in chunks for alternative in chunk.alternatives for word in alternative.words]
-        # Затем сортируем их по начальному времени
-        words.sort(key=lambda x: float(x.startTime.replace('s', '')))
-        # И возвращаем текст
-        return ' '.join([word.word for word in words])
+        return ' '.join([
+            ' '.join(
+                [alternative.text for alternative in chunk.alternatives]
+            ) for chunk in chunks]
+        )
 
     async def _recognize(self, recognizer: RecognitionLongAudio) -> str:
         """
@@ -153,8 +152,9 @@ class Speech2Text:
             recognizer.send_for_recognition(
                 file_path=file.name,
                 literature_text=True,
-                language_code='auto',
-                model='general:rc',
+                language_code='ru-RU',
+                model='general',
                 audioEncoding='MP3',
+
             )
         return await self._recognize(recognizer)

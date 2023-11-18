@@ -13,7 +13,7 @@ ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
 RUN apt-get update \
-    && apt-get install -y gcc python3-dev musl-dev postgresql build-essential netcat ffmpeg && \
+    && apt-get install -y gcc python3-dev musl-dev postgresql build-essential netcat-traditional ffmpeg && \
     apt-get clean --dry-run && \
     rm -rf /var/lib/apt/lists/*
 

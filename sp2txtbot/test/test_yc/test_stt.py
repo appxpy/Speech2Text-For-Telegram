@@ -11,7 +11,7 @@ async def test_stt(patch_speechkit):
 
     result = await stt.recognize('sp2txtbot/test/data/test-voice.ogg', '.ogg')
 
-    assert result == 'проверка'
+    assert result == 'Проверка'
 
 
 @pytest.mark.asyncio

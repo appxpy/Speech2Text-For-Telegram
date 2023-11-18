@@ -32,8 +32,7 @@ def test_register_handlers(handlers):
 
 @pytest.mark.filterwarnings("ignore:There is no current event loop")
 @pytest.mark.asyncio
-async def test_media_handler_voice(handlers, voice_message, initialize_db, patch_speechkit, patch_punctuator):
-    patch_punctuator()
+async def test_media_handler_voice(handlers, voice_message, initialize_db, patch_speechkit):
     await handlers.media(voice_message)
     assert await User.get(id=voice_message.from_user.id).values_list('id', flat=True) == 1
     recognition = await Recognition.get(file_id=voice_message.voice.file_unique_id).prefetch_related('user')
@@ -46,8 +45,7 @@ async def test_media_handler_voice(handlers, voice_message, initialize_db, patch
 
 @pytest.mark.filterwarnings("ignore:There is no current event loop")
 @pytest.mark.asyncio
-async def test_media_handler_video_note(handlers: Handlers, video_note_message: Message, initialize_db, patch_speechkit, patch_punctuator):
-    patch_punctuator()
+async def test_media_handler_video_note(handlers: Handlers, video_note_message: Message, initialize_db, patch_speechkit):
     await handlers.media(video_note_message)
     assert await User.get(id=video_note_message.from_user.id).values_list('id', flat=True) == 1
     recognition: Recognition = await Recognition.get(file_id=video_note_message.video_note.file_unique_id).prefetch_related('user')

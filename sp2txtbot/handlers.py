@@ -4,7 +4,6 @@ import tempfile
 import pickle
 from typing import Optional
 from yc.stt import Speech2Text
-from pn.punctuator import Punctuator
 from aiogram import types, Bot, Dispatcher
 from db.models import User, Recognition
 from schema import msg
@@ -27,7 +26,6 @@ class Handlers:
         self.bot: Bot = bot
         self.dp = dp
         self.stt = Speech2Text(logger)
-        self.pn = Punctuator(logger)
         self.logger = logger
 
     async def start(self, message: types.Message):
@@ -136,7 +134,7 @@ class Handlers:
             # Отправляем в STT (Speech2Text)
             text = await self.stt.recognize(file_path.name, ext)
         # Отправляем в Punctuator
-        text = await self.pn.process(text)
+        # text = await self.pn.process(text)
         # Сохраняем в кэш
         await self.cache_recognition(message, text, file_unique_id)
         # Отправляем пользователю

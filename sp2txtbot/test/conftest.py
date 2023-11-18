@@ -5,30 +5,6 @@ from handlers import Handlers
 from unittest.mock import AsyncMock, Mock
 from tortoise.contrib.test import finalizer, initializer, _TORTOISE_TEST_DB
 from speechkit import RecognitionLongAudio, auth, Session
-from pn.entities import PunctuationResponse
-from pn.punctuator import Punctuator
-
-
-@pytest.fixture(scope='session')
-def patch_punctuator(monkeymodule):
-    def patch_send_request(
-        punctuation='Проверка',
-        status=2,
-        text_id='123',
-        result=None,
-    ):
-        response = PunctuationResponse(
-            punctuation=punctuation,
-            status=status,
-            text_id=text_id,
-            result=result,
-            resultText='Проверка',
-            text='Проверка',
-        )
-        monkeymodule.setattr(Punctuator, '_send_request', AsyncMock(return_value=response))
-
-    return patch_send_request
-
 
 @pytest.fixture(scope='session')
 def patch_speechkit(monkeymodule):
@@ -36,7 +12,7 @@ def patch_speechkit(monkeymodule):
         return True
 
     def get_data(self):
-        return [{'alternatives': [{'words': [{'startTime': '0.560s', 'endTime': '1.459s', 'word': 'проверка', 'confidence': 1}], 'text': 'проверка', 'confidence': 1}], 'channelTag': '1'}]
+        return [{'alternatives': [{'words': [{'startTime': '0.560s', 'endTime': '1.459s', 'word': 'проверка', 'confidence': 1}], 'text': 'Проверка', 'confidence': 1}], 'channelTag': '1'}]
 
     monkeymodule.setattr(RecognitionLongAudio, 'get_recognition_results', get_recognition_results)
     monkeymodule.setattr(RecognitionLongAudio, 'get_data', get_data)

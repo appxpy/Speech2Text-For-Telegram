@@ -1,9 +1,6 @@
 import os
-import sys
 import logging
-import coloredlogs
 import base64
-
 from hashlib import sha512
 
 
@@ -25,8 +22,6 @@ _ = None
 if not DEBUG:
     _ = LOG_FILE
 
-coloredlogs.install()
-
 logging.basicConfig(
     filename=_,
     format='[%(asctime)s] - [%(levelname)s] - %(name)s - %(message)s',
@@ -45,7 +40,7 @@ VIRTUAL_PORT = os.environ.get('VIRTUAL_PORT', 8080)           # Виртуаль
 
 BOT_TOKEN = os.environ.get('BOT_TOKEN', '')  # Токен бота
 BOT_TOKEN_HASH = sha512(BOT_TOKEN.encode()).hexdigest()                      # Хэш токена бота
-BOT_SECURE_KEY = os.environ.get('BOT_SECURE_KEY')                            # Секретный ключ бота (для проверки вебхуков)
+BOT_SECURE_KEY = os.environ.get('BOT_SECURE_KEY')   # Секретный ключ бота (для проверки вебхуков)
 BOT_WEBHOOK_URL = f'https://{VIRTUAL_HOST}/{BOT_TOKEN_HASH}'                 # URL вебхука
 
 # Настройки базы данных
@@ -78,5 +73,5 @@ YANDEX_CLOUD_PRIVATE_KEY = base64.b64decode(YANDEX_CLOUD_PRIVATE_KEY_BASE64).dec
 
 # Настройки сервиса автоматической пунктуации
 
-PUNCTUATION_USER_ID = int(os.environ.get('PUNCTUATION_USER_ID', 0))  # Идентификатор пользователя
-PUNCTUATION_TOKEN = os.environ.get('PUNCTUATION_TOKEN', '')      # Токен пользователя
+# PUNCTUATION_USER_ID = int(os.environ.get('PUNCTUATION_USER_ID', 0))  # Идентификатор пользователя
+# PUNCTUATION_TOKEN = os.environ.get('PUNCTUATION_TOKEN', '')      # Токен пользователя
