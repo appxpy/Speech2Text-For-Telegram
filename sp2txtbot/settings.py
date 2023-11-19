@@ -10,20 +10,10 @@ DEBUG = bool(os.environ.get('DEBUG', False))
 LISTEN = '0.0.0.0'
 BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 
-# Задаем путь к файлу с логами, если он не существует, то создаем его
-
-LOG_FILE = os.path.join(BASE_PATH, 'sp2txtbot.log')
-open(LOG_FILE, 'w+').close()
-
 # Задаем конфигурацию логгера
 
-_ = None
-
-if not DEBUG:
-    _ = LOG_FILE
 
 logging.basicConfig(
-    filename=_,
     format='[%(asctime)s] - [%(levelname)s] - %(name)s - %(message)s',
     level=logging.DEBUG if DEBUG else logging.INFO
 )
